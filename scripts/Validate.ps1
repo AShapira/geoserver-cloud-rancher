@@ -16,7 +16,10 @@ do {
     foreach ($pod in $pods) {
         if ($pod.status.phase -eq 'Failed') { throw ('Failed pod: ' + $pod.metadata.namespace + '/' + $pod.metadata.name) }
         if ($pod.status.phase -eq 'Succeeded') { continue }
-        $statuses = @($pod.status.containerStatuses)
+        $statuses = @()
+        if ($pod.status.PSObject.Properties.Name -contains 'containerStatuses') {
+            $statuses = @($pod.status.containerStatuses)
+        }
         if ($statuses.Count -eq 0 -or @($statuses | Where-Object { -not $_.ready }).Count -gt 0) {
             $pending.Add($pod.metadata.namespace + '/' + $pod.metadata.name)
         }
@@ -27,6 +30,7 @@ do {
 } while ($true)
 Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca ('https://' + $config.RANCHER_HOSTNAME + '/ping')
 Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca ('https://' + $config.MAPS_HOSTNAME + '/healthz')
+Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca --user ('kasm_user:' + $config.QGIS_PASSWORD) ('https://' + $config.QGIS_HOSTNAME + '/') --output (Join-Path $out 'qgis-desktop.html')
 Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca ($base + '/wms?service=WMS&version=1.3.0&request=GetCapabilities') --output (Join-Path $out 'wms-capabilities.xml')
 Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca ($base + '/wms?service=WMS&version=1.3.0&request=GetMap&layers=demo:demo_places&styles=&crs=EPSG:4326&bbox=34,31,36,33&width=512&height=512&format=image/png') --output (Join-Path $out 'wms-map.png')
 Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca ($base + '/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=demo:demo_places&outputFormat=application%2Fjson') --output (Join-Path $out 'wfs-features.json')
@@ -41,6 +45,15 @@ if ((Get-Item -LiteralPath (Join-Path $out 'wmts-tile.png')).Length -lt 100) { t
 
 $postgisPod = kubectl -n $config.PLATFORM_NAMESPACE get pod -l app.kubernetes.io/component=postgis -o jsonpath='{.items[0].metadata.name}'
 Invoke-Native kubectl -n $config.PLATFORM_NAMESPACE exec $postgisPod '--' psql -U postgres -d gisdata -tAc 'SELECT count(*) FROM demo_places;'
+$qgisPod = kubectl -n $config.GEOSERVER_NAMESPACE get pod -l app.kubernetes.io/name=gscloud-qgis -o jsonpath='{.items[0].metadata.name}'
+Invoke-Native kubectl -n $config.GEOSERVER_NAMESPACE exec $qgisPod '--' qgis --version
+Invoke-Native kubectl -n $config.GEOSERVER_NAMESPACE exec $qgisPod '--' geoserver-rest GET about/version.json
+Invoke-Native kubectl -n $config.GEOSERVER_NAMESPACE exec $qgisPod '--' sh -c 'PGPASSWORD="$POSTGIS_PASSWORD" psql -h "$POSTGIS_HOST" -U "$POSTGIS_USERNAME" -d "$POSTGIS_DATABASE" -tAc "SELECT count(*) FROM demo_places;" | grep -q 3'
+$marker = 'qgis-shared-data-' + (Get-Date -Format 'yyyyMMddHHmmss')
+Invoke-Native kubectl -n $config.GEOSERVER_NAMESPACE exec $qgisPod '--' sh -c ('printf %s ' + $marker + ' > /data/validation-marker.txt')
+$wmsPodForData = kubectl -n $config.GEOSERVER_NAMESPACE get pod -l app.kubernetes.io/component=wms -o jsonpath='{.items[0].metadata.name}'
+$observedMarker = kubectl -n $config.GEOSERVER_NAMESPACE exec $wmsPodForData '--' cat /data/validation-marker.txt
+if (($observedMarker -join '').Trim() -ne $marker) { throw 'QGIS and GeoServer do not observe the same /data volume.' }
 $rabbitPod = kubectl -n $config.PLATFORM_NAMESPACE get pod -l app.kubernetes.io/component=rabbitmq -o jsonpath='{.items[0].metadata.name}'
 Invoke-Native kubectl -n $config.PLATFORM_NAMESPACE exec $rabbitPod '--' rabbitmqctl list_queues name messages consumers
 

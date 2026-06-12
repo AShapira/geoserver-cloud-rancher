@@ -22,6 +22,21 @@ JCR uses the generated administrator password for Basic Auth. JCR Edition blocks
 
 `Prepare-Online.ps1` mirrors the complete image set resolved by this simulation. `-IncludeRancherReleaseImageSet` additionally mirrors Rancher's full release catalog, including images for unrelated downstream Kubernetes variants and optional applications; budget hundreds of gigabytes for that mode.
 
+## QGIS desktop
+
+Open `https://qgis.localhost` and sign in as `kasm_user`. The generated password is the `QGIS_PASSWORD` value in `.state/config.env`.
+
+The deployment provides one shared browser desktop rather than isolated sessions. Its persistent profile is mounted at `/home/kasm-user`, and geodata shared with GeoServer is mounted at `/data`. QGIS starts with saved connections named `GeoServer PostGIS` and `GeoServer Cloud`.
+
+From the QGIS terminal, the REST helper uses the generated GeoServer administrator credentials without printing them:
+
+```bash
+geoserver-rest GET about/version.json
+geoserver-rest GET workspaces/demo/datastores.json
+```
+
+QGIS, KasmVNC, and the Kasm core-image source are open source. This deployment does not install the full Kasm Workspaces platform.
+
 ## Recovery order
 
 1. Start Docker Desktop.
@@ -32,3 +47,5 @@ JCR uses the generated administrator password for Basic Auth. JCR Edition blocks
 ## Updating pinned components
 
 Update `versions.lock.yaml` and the corresponding constants in `scripts/Common.ps1`, run `Prepare-Online.ps1 -ForceMirror`, then repeat the isolation and validation tests. Runtime charts must never contain references outside `jcr-proxy:8443/docker-local`.
+
+Changing `QGIS_IMAGE_TAG` requires rebuilding with `Prepare-Online.ps1`. Existing installations can run `Initialize-State.ps1` to add missing QGIS configuration and regenerate the endpoint certificate with `qgis.localhost` while retaining the existing CA and passwords.

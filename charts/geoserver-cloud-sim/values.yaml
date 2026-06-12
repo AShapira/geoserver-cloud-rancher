@@ -5,6 +5,7 @@ runtimeSecrets:
   pgconfigPassword: change-me
   geoserverAdminUsername: admin
   geoserverAdminPassword: change-me
+  qgisPassword: change-me
 
 registry:
   pullSecret: jcr-credentials
@@ -20,6 +21,26 @@ viewer:
     limits:
       cpu: 200m
       memory: 128Mi
+
+qgis:
+  image: jcr-proxy:8443/docker-local/gscloud/qgis:0.1.0
+  host: qgis.localhost
+  tlsSecret: qgis-tls
+  profileStorage: 4Gi
+  postgisHost: platform-platform-infra-postgis.platform-infra.svc.cluster.local
+  postgisPort: "5432"
+  postgisDatabase: gisdata
+  geoserverInternalUrl: http://gscloud-gsc-gateway:8080/geoserver-cloud
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "3"
+      memory: 4Gi
+
+geodata:
+  storage: 8Gi
 
 bootstrap:
   image: jcr-proxy:8443/docker-local/curlimages/curl:8.12.1
@@ -82,6 +103,15 @@ commonResources: &commonResources
     cpu: "1"
     memory: 1536Mi
 
+sharedVolumes: &sharedVolumes
+  geodata:
+    persistentVolumeClaim:
+      claimName: gscloud-geodata
+
+sharedMounts: &sharedMounts
+  /data:
+    name: geodata
+
 geoservercloud:
   global:
     profile: standalone,pgconfig
@@ -108,30 +138,38 @@ geoservercloud:
           path: /geoserver-cloud/
         containers:
           spring:
+            volumeMounts: *sharedMounts
             env: *commonEnv
             resources: *commonResources
             image:
               repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-gateway
               tag: 3.0.0-RC
+        volumes: *sharedVolumes
       webui:
+        volumes: *sharedVolumes
         containers:
           spring:
+            volumeMounts: *sharedMounts
             env: *commonEnv
             resources: *commonResources
             image:
               repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-webui
               tag: 3.0.0-RC
       rest:
+        volumes: *sharedVolumes
         containers:
           spring:
+            volumeMounts: *sharedMounts
             env: *commonEnv
             resources: *commonResources
             image:
               repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-rest
               tag: 3.0.0-RC
       wms:
+        volumes: *sharedVolumes
         containers:
           spring:
+            volumeMounts: *sharedMounts
             env: *commonEnv
             resources:
               requests:
@@ -144,8 +182,10 @@ geoservercloud:
               repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-wms
               tag: 3.0.0-RC
       wfs:
+        volumes: *sharedVolumes
         containers:
           spring:
+            volumeMounts: *sharedMounts
             env: *commonEnv
             resources: *commonResources
             image:
@@ -153,6 +193,7 @@ geoservercloud:
               tag: 3.0.0-RC
       gwc:
         volumes:
+          <<: *sharedVolumes
           cache:
             persistentVolumeClaim:
               claimName: gscloud-gwc-cache
@@ -163,6 +204,7 @@ geoservercloud:
               GWC_CACHE_DIRECTORY:
                 value: /mnt/cache
             volumeMounts:
+              <<: *sharedMounts
               /mnt/cache:
                 name: cache
             resources: *commonResources
@@ -175,3 +217,6 @@ geoservercloud:
         enabled: false
       acl:
         enabled: false
+    podSecurityContext:
+      fsGroup: 1000
+      fsGroupChangePolicy: OnRootMismatch

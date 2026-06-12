@@ -15,8 +15,10 @@ applications:
   curl: curlimages/curl:8.12.1
   k6: grafana/k6:0.54.0
   canary: busybox:1.37.0
+  qgisBase: kasmweb/core-ubuntu-noble:1.17.0@sha256:eeaab79e401c3b70977afba2f7ec0d166e95547fdbca1d070905532a1af70f8c
+  qgis: 3.34.4
   viewerBuilder: node:22.14-alpine
   viewerRuntime: nginxinc/nginx-unprivileged:1.27-alpine
 charts:
   platformInfra: 0.1.0
-  geoserverCloudSimulation: 0.1.0
+  geoserverCloudSimulation: 0.2.0

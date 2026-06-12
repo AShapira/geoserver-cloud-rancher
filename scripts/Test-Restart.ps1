@@ -2,6 +2,10 @@ param()
 . (Join-Path $PSScriptRoot 'Common.ps1')
 
 $config = Get-Config
+$qgisPod = kubectl -n $config.GEOSERVER_NAMESPACE get pod -l app.kubernetes.io/name=gscloud-qgis -o jsonpath='{.items[0].metadata.name}'
+$persistenceToken = 'qgis-persistence-' + (Get-Date -Format 'yyyyMMddHHmmss')
+Invoke-Native kubectl -n $config.GEOSERVER_NAMESPACE exec $qgisPod '--' sh -c ('printf %s ' + $persistenceToken + ' > /data/restart-persistence.txt')
+Invoke-Native kubectl -n $config.GEOSERVER_NAMESPACE exec $qgisPod '--' sh -c ('printf %s ' + $persistenceToken + ' > /home/kasm-user/restart-persistence.txt')
 $rabbitPod = kubectl -n $config.PLATFORM_NAMESPACE get pod -l app.kubernetes.io/component=rabbitmq -o jsonpath='{.items[0].metadata.name}'
 $postgisPod = kubectl -n $config.PLATFORM_NAMESPACE get pod -l app.kubernetes.io/component=postgis -o jsonpath='{.items[0].metadata.name}'
 Invoke-Native kubectl -n $config.PLATFORM_NAMESPACE delete pod $rabbitPod $postgisPod
@@ -25,4 +29,10 @@ do {
 if ($wasAirGapped) { & (Join-Path $PSScriptRoot 'Enter-AirGap.ps1') }
 
 & (Join-Path $PSScriptRoot 'Validate.ps1')
+$qgisPod = kubectl -n $config.GEOSERVER_NAMESPACE get pod -l app.kubernetes.io/name=gscloud-qgis -o jsonpath='{.items[0].metadata.name}'
+$dataToken = kubectl -n $config.GEOSERVER_NAMESPACE exec $qgisPod '--' cat /data/restart-persistence.txt
+$profileToken = kubectl -n $config.GEOSERVER_NAMESPACE exec $qgisPod '--' cat /home/kasm-user/restart-persistence.txt
+if (($dataToken -join '').Trim() -ne $persistenceToken -or ($profileToken -join '').Trim() -ne $persistenceToken) {
+    throw 'QGIS profile or shared geodata did not persist across restart.'
+}
 Write-Host 'Restart and persistence validation completed.'

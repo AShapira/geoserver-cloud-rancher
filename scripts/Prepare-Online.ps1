@@ -2,7 +2,7 @@ param([switch]$ForceMirror, [switch]$IncludeRancherReleaseImageSet)
 . (Join-Path $PSScriptRoot 'Common.ps1')
 
 & (Join-Path $PSScriptRoot 'Install-Tools.ps1')
-if (-not (Test-Path -LiteralPath $script:ConfigPath)) { & (Join-Path $PSScriptRoot 'Initialize-State.ps1') }
+& (Join-Path $PSScriptRoot 'Initialize-State.ps1')
 & (Join-Path $PSScriptRoot 'Start-Jcr.ps1')
 $config = Get-Config
 $helm = Get-HelmPath
@@ -118,6 +118,13 @@ Invoke-Native docker build --tag $viewerPush (Join-Path (Get-RepoRoot) 'viewer')
 Invoke-Native docker push $viewerPush
 $viewerDigest = (& docker image inspect $viewerPush --format '{{index .RepoDigests 0}}' 2>$null)
 $manifest.Add([pscustomobject]@{ source = 'local/viewer'; push = $viewerPush; runtime = $viewerRuntime; digest = $viewerDigest })
+
+$qgisPush = ('{0}/{1}/{2}:{3}' -f (Get-JcrClientHost -Config $config), $config.JCR_DOCKER_REPOSITORY, $config.QGIS_IMAGE_NAME, $config.QGIS_IMAGE_TAG)
+$qgisRuntime = ('{0}/{1}/{2}:{3}' -f $config.JCR_INTERNAL_HOST, $config.JCR_DOCKER_REPOSITORY, $config.QGIS_IMAGE_NAME, $config.QGIS_IMAGE_TAG)
+Invoke-Native docker build --platform linux/amd64 --build-arg ('QGIS_BASE_IMAGE=' + $script:Versions.QgisBaseImage) --tag $qgisPush (Join-Path (Get-RepoRoot) 'qgis')
+Invoke-Native docker push $qgisPush
+$qgisDigest = (& docker image inspect $qgisPush --format '{{index .RepoDigests 0}}' 2>$null)
+$manifest.Add([pscustomobject]@{ source = 'local/qgis'; push = $qgisPush; runtime = $qgisRuntime; digest = $qgisDigest })
 Set-FileUtf8NoBom -Path $existingManifestPath -Content ($manifest | ConvertTo-Json -Depth 5)
 
 $helmHome = Join-Path (Get-StateDir) 'helm'

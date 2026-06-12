@@ -16,6 +16,7 @@ flowchart LR
   Rancher["Rancher 2.14.2"] --> K8s["Single-node K3s 1.35.5"]
   Ingress --> Rancher
   Ingress --> Viewer["Offline OpenLayers viewer"]
+  Ingress --> QGIS["QGIS Desktop via KasmVNC"]
   Ingress --> Gateway["GeoServer Cloud gateway"]
   Gateway --> WMS
   Gateway --> WFS
@@ -32,6 +33,12 @@ flowchart LR
   GWC --> RMQ
   REST --> RMQ
   WebUI --> RMQ
+  QGIS --> Gateway
+  QGIS --> PG
+  QGIS --> Data["Shared /data PVC"]
+  WMS --> Data
+  WFS --> Data
+  REST --> Data
   K8s -->|pull only| JCR
 ```
 
@@ -43,4 +50,8 @@ Images are mirrored into `docker-local`. Docker Hub image paths retain their nor
 
 - JCR data is stored under `.state/jcr` on the host.
 - PostGIS, RabbitMQ, and GeoWebCache use K3s local-path PVCs.
+- The QGIS profile uses a dedicated PVC so projects and settings survive pod recreation.
+- QGIS and the GeoServer Cloud services share a writable `/data` PVC for file-based geodata. Because this is a single-node simulation, `ReadWriteOnce` is sufficient; a multi-node deployment requires `ReadWriteMany` storage.
 - `Teardown.ps1` preserves state by default. `-PurgeData` removes generated state and persistent data.
+
+GeoServer catalog configuration is held in PGConfig rather than a classic shared GeoServer data directory. The `/data` PVC is therefore an explicit geodata exchange area, not the GeoServer configuration directory.
