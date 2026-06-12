@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>GeoServer Cloud Air-Gap Console</title>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Rancher-managed offline GIS</p>
+          <h1>GeoServer Cloud 3.0</h1>
+          <p class="subtitle">Live protocol checks against the local WMS, WMTS, and WFS services.</p>
+        </div>
+        <a class="admin-link" href="/geoserver-cloud/web/" target="_blank" rel="noreferrer">Open administration</a>
+      </header>
+
+      <section class="status-grid" aria-label="Protocol status">
+        <article class="status-card" data-protocol="wms"><span>WMS</span><strong id="wms-status">Checking</strong><small id="wms-detail">GetMap</small></article>
+        <article class="status-card" data-protocol="wmts"><span>WMTS</span><strong id="wmts-status">Checking</strong><small id="wmts-detail">GetTile</small></article>
+        <article class="status-card" data-protocol="wfs"><span>WFS</span><strong id="wfs-status">Checking</strong><small id="wfs-detail">GetFeature</small></article>
+      </section>
+
+      <section class="workspace">
+        <aside class="controls">
+          <h2>Layers</h2>
+          <label><input id="wms-toggle" type="checkbox" checked /> WMS rendered points</label>
+          <label><input id="wmts-toggle" type="checkbox" /> WMTS cached tiles</label>
+          <label><input id="wfs-toggle" type="checkbox" checked /> WFS vector features</label>
+          <div class="metric"><span>WFS features</span><strong id="feature-count">0</strong></div>
+          <div class="metric"><span>Last refresh</span><strong id="last-refresh">Never</strong></div>
+          <button id="refresh" type="button">Refresh services</button>
+          <p id="error" class="error" role="alert"></p>
+        </aside>
+        <div id="map" class="map" aria-label="GeoServer protocol map"></div>
+      </section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

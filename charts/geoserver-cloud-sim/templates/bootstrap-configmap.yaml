@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gscloud-bootstrap
+data:
+  demo-places.sld: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <StyledLayerDescriptor version="1.0.0" xmlns="http://www.opengis.net/sld" xmlns:ogc="http://www.opengis.net/ogc" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <NamedLayer><Name>demo_places</Name><UserStyle><Title>Air-gap demo places</Title><FeatureTypeStyle><Rule>
+        <PointSymbolizer><Graphic><Mark><WellKnownName>circle</WellKnownName><Fill><CssParameter name="fill">#f59e0b</CssParameter></Fill><Stroke><CssParameter name="stroke">#172033</CssParameter><CssParameter name="stroke-width">2</CssParameter></Stroke></Mark><Size>14</Size></Graphic></PointSymbolizer>
+      </Rule></FeatureTypeStyle></UserStyle></NamedLayer>
+    </StyledLayerDescriptor>
+  bootstrap.sh: |
+    #!/bin/sh
+    set -eu
+    BASE=http://gscloud-gsc-gateway:8080/geoserver-cloud
+    AUTH="$GS_ADMIN_USER:$GS_ADMIN_PASSWORD"
+    echo "Waiting for GeoServer Cloud REST API"
+    until curl -fsS -u "$AUTH" "$BASE/rest/about/version.json" >/dev/null; do sleep 5; done
+
+    if ! curl -fsS -u "$AUTH" "$BASE/rest/workspaces/demo.json" >/dev/null; then
+      curl -fsS -u "$AUTH" -H 'Content-Type: application/json' -d '{"workspace":{"name":"demo"}}' "$BASE/rest/workspaces"
+    fi
+
+    if ! curl -fsS -u "$AUTH" "$BASE/rest/workspaces/demo/datastores/gisdata.json" >/dev/null; then
+      cat >/tmp/datastore.json <<EOF
+    {"dataStore":{"name":"gisdata","connectionParameters":{"entry":[
+      {"@key":"dbtype","$":"postgis"},{"@key":"host","$":"{{ .Values.bootstrap.postgisHost }}"},
+      {"@key":"port","$":"5432"},{"@key":"database","$":"{{ .Values.bootstrap.postgisDatabase }}"},
+      {"@key":"schema","$":"{{ .Values.bootstrap.postgisSchema }}"},{"@key":"user","$":"$DB_USER"},
+      {"@key":"passwd","$":"$DB_PASSWORD"},{"@key":"Expose primary keys","$":"true"}
+    ]}}}
+    EOF
+      curl -fsS -u "$AUTH" -H 'Content-Type: application/json' --data-binary @/tmp/datastore.json "$BASE/rest/workspaces/demo/datastores"
+    fi
+
+    if ! curl -fsS -u "$AUTH" "$BASE/rest/workspaces/demo/datastores/gisdata/featuretypes/demo_places.json" >/dev/null; then
+      curl -fsS -u "$AUTH" -H 'Content-Type: application/json' -d '{"featureType":{"name":"demo_places","nativeName":"demo_places","title":"Air-gap Demo Places","srs":"EPSG:4326","enabled":true}}' "$BASE/rest/workspaces/demo/datastores/gisdata/featuretypes"
+    fi
+
+    if ! curl -fsS -u "$AUTH" "$BASE/rest/workspaces/demo/styles/demo_places.json" >/dev/null; then
+      curl -fsS -u "$AUTH" -X POST -H 'Content-Type: application/vnd.ogc.sld+xml' --data-binary @/config/demo-places.sld "$BASE/rest/workspaces/demo/styles?name=demo_places"
+    else
+      curl -fsS -u "$AUTH" -X PUT -H 'Content-Type: application/vnd.ogc.sld+xml' --data-binary @/config/demo-places.sld "$BASE/rest/workspaces/demo/styles/demo_places"
+    fi
+    curl -fsS -u "$AUTH" -X PUT -H 'Content-Type: application/json' -d '{"layer":{"defaultStyle":{"name":"demo_places","workspace":"demo"}}}' "$BASE/rest/layers/demo:demo_places"
+    curl -fsS -u "$AUTH" -X PUT -H 'Content-Type: application/json' -d '{"GeoServerLayer":{"name":"demo:demo_places","enabled":true}}' "$BASE/gwc/rest/layers/demo:demo_places.json"
+    curl -fsS "$BASE/wms?service=WMS&request=GetCapabilities" >/dev/null
+    curl -fsS "$BASE/wfs?service=WFS&request=GetCapabilities" >/dev/null
+    curl -fsS "$BASE/gwc/service/wmts?SERVICE=WMTS&REQUEST=GetCapabilities" | grep -q 'demo:demo_places'
+    echo "GeoServer demo catalog is ready"

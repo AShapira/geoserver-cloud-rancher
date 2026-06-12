@@ -1,0 +1,16 @@
+geoservercloud:
+  geoserver:
+    services:
+      wms:
+        replicaCount: 2
+        hpa:
+          enabled: false
+          minReplicas: 1
+          maxReplicas: 3
+          metrics:
+            - type: Resource
+              resource:
+                name: cpu
+                target:
+                  type: Utilization
+                  averageUtilization: 70

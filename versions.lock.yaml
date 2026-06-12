@@ -1,0 +1,22 @@
+tools:
+  helm: 3.20.2
+  k3d: 5.9.0
+platform:
+  rancher: 2.14.2
+  k3s: v1.35.5+k3s1
+  jcrImage: releases-docker.jfrog.io/jfrog/artifactory-jcr@sha256:f7a6173eb6886a9ed0383c0008b93d9a1be11faf763d19785b45c550a922b8b5
+  jcrProxyImage: nginxinc/nginx-unprivileged:1.27-alpine
+  jcrDatabaseImage: postgres:16-alpine
+applications:
+  geoserverCloudChart: 3.0.0-rc
+  geoserverCloudImage: 3.0.0-RC
+  postgis: postgis/postgis:16-3.4
+  rabbitmq: rabbitmq:3.13.7-management-alpine
+  curl: curlimages/curl:8.12.1
+  k6: grafana/k6:0.54.0
+  canary: busybox:1.37.0
+  viewerBuilder: node:22.14-alpine
+  viewerRuntime: nginxinc/nginx-unprivileged:1.27-alpine
+charts:
+  platformInfra: 0.1.0
+  geoserverCloudSimulation: 0.1.0

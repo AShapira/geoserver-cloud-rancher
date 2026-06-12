@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gscloud-viewer
+  labels:
+    app.kubernetes.io/name: gscloud-viewer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: gscloud-viewer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: gscloud-viewer
+    spec:
+      imagePullSecrets:
+        - name: {{ .Values.registry.pullSecret }}
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: viewer
+          image: {{ .Values.viewer.image | quote }}
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+          resources:
+            {{- toYaml .Values.viewer.resources | nindent 12 }}
+          volumeMounts:
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: run
+              mountPath: /var/run
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: cache
+          emptyDir: {}
+        - name: run
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gscloud-viewer
+spec:
+  selector:
+    app.kubernetes.io/name: gscloud-viewer
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: gscloud-viewer
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - {{ .Values.viewer.host }}
+      secretName: {{ .Values.viewer.tlsSecret }}
+  rules:
+    - host: {{ .Values.viewer.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: gscloud-viewer
+                port:
+                  name: http

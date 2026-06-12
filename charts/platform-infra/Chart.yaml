@@ -1,0 +1,6 @@
+apiVersion: v2
+name: platform-infra
+description: External RabbitMQ and PostGIS for the GeoServer Cloud air-gap simulation
+type: application
+version: 0.1.0
+appVersion: "1.0"

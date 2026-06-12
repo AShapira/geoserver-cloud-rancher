@@ -1,0 +1,38 @@
+.state/
+.tools/
+dist/
+reports/*.json
+reports/*.log
+viewer/node_modules/
+viewer/dist/
+charts/*/charts/
+*.tgz
+.env
+.env.*
+!.env.example
+
+# Editor and operating-system metadata
+.idea/
+.vscode/
+.vs/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary and backup files
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+*.rej
+*.tmp
+*.pid
+
+# Package-manager diagnostics and local build caches
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.cache/
+.vite/

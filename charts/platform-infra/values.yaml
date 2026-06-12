@@ -1,0 +1,36 @@
+registry:
+  pullSecret: jcr-credentials
+
+images:
+  busybox: jcr-proxy:8443/docker-local/rancher/mirrored-library-busybox:1.37.0
+  postgis: jcr-proxy:8443/docker-local/postgis/postgis:16-3.4
+  rabbitmq: jcr-proxy:8443/docker-local/library/rabbitmq:3.13.7-management-alpine
+
+secrets:
+  postgresSuperUsername: postgres
+  postgresSuperPassword: change-me
+  geoserverUsername: geoserver
+  geoserverPassword: change-me
+  rabbitmqUsername: geoserver
+  rabbitmqPassword: change-me
+  rabbitmqErlangCookie: change-me
+
+postgis:
+  storage: 8Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 1536Mi
+
+rabbitmq:
+  storage: 2Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi

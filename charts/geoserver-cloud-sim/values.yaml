@@ -1,0 +1,177 @@
+runtimeSecrets:
+  rabbitmqUsername: geoserver
+  rabbitmqPassword: change-me
+  pgconfigUsername: geoserver
+  pgconfigPassword: change-me
+  geoserverAdminUsername: admin
+  geoserverAdminPassword: change-me
+
+registry:
+  pullSecret: jcr-credentials
+
+viewer:
+  image: jcr-proxy:8443/docker-local/gscloud/viewer:0.1.0
+  host: maps.localhost
+  tlsSecret: maps-tls
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+bootstrap:
+  image: jcr-proxy:8443/docker-local/curlimages/curl:8.12.1
+  postgisHost: platform-platform-infra-postgis.platform-infra.svc.cluster.local
+  postgisDatabase: gisdata
+  postgisSchema: public
+
+gwc:
+  storage: 4Gi
+
+commonEnv: &commonEnv
+  SPRING_PROFILES_ACTIVE:
+    value: standalone,pgconfig
+  RABBITMQ_HOST:
+    value: platform-platform-infra-rabbitmq.platform-infra.svc.cluster.local
+  RABBITMQ_PORT:
+    value: "5672"
+  RABBITMQ_USER:
+    type: secret
+    name: gscloud-runtime
+    key: rabbitmq-username
+  RABBITMQ_PASSWORD:
+    type: secret
+    name: gscloud-runtime
+    key: rabbitmq-password
+  PGCONFIG_HOST:
+    value: platform-platform-infra-postgis.platform-infra.svc.cluster.local
+  PGCONFIG_PORT:
+    value: "5432"
+  PGCONFIG_DATABASE:
+    value: gscloud_config
+  PGCONFIG_SCHEMA:
+    value: pgconfig
+  PGCONFIG_USERNAME:
+    type: secret
+    name: gscloud-runtime
+    key: pgconfig-username
+  PGCONFIG_PASSWORD:
+    type: secret
+    name: gscloud-runtime
+    key: pgconfig-password
+  PGCONFIG_MAXCONNECTIONS:
+    value: "10"
+  GEOSERVER_ADMIN_USERNAME:
+    type: secret
+    name: gscloud-runtime
+    key: geoserver-admin-username
+  GEOSERVER_ADMIN_PASSWORD:
+    type: secret
+    name: gscloud-runtime
+    key: geoserver-admin-password
+  GWC_CACHE_DIRECTORY:
+    value: /tmp/gwc
+
+commonResources: &commonResources
+  requests:
+    cpu: 100m
+    memory: 384Mi
+  limits:
+    cpu: "1"
+    memory: 1536Mi
+
+geoservercloud:
+  global:
+    profile: standalone,pgconfig
+    image:
+      pullPolicy: IfNotPresent
+      pullSecrets:
+        - name: jcr-credentials
+  geoserver:
+    dockerregistry:
+      enabled: false
+    ingress:
+      enabled: true
+      hostGroups:
+        maps:
+          tls:
+            enabled: true
+            secretName: maps-tls
+          hosts:
+            - maps.localhost
+    services:
+      gateway:
+        ingress:
+          enabled: true
+          path: /geoserver-cloud/
+        containers:
+          spring:
+            env: *commonEnv
+            resources: *commonResources
+            image:
+              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-gateway
+              tag: 3.0.0-RC
+      webui:
+        containers:
+          spring:
+            env: *commonEnv
+            resources: *commonResources
+            image:
+              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-webui
+              tag: 3.0.0-RC
+      rest:
+        containers:
+          spring:
+            env: *commonEnv
+            resources: *commonResources
+            image:
+              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-rest
+              tag: 3.0.0-RC
+      wms:
+        containers:
+          spring:
+            env: *commonEnv
+            resources:
+              requests:
+                cpu: 250m
+                memory: 512Mi
+              limits:
+                cpu: "2"
+                memory: 2Gi
+            image:
+              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-wms
+              tag: 3.0.0-RC
+      wfs:
+        containers:
+          spring:
+            env: *commonEnv
+            resources: *commonResources
+            image:
+              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-wfs
+              tag: 3.0.0-RC
+      gwc:
+        volumes:
+          cache:
+            persistentVolumeClaim:
+              claimName: gscloud-gwc-cache
+        containers:
+          spring:
+            env:
+              <<: *commonEnv
+              GWC_CACHE_DIRECTORY:
+                value: /mnt/cache
+            volumeMounts:
+              /mnt/cache:
+                name: cache
+            resources: *commonResources
+            image:
+              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-gwc
+              tag: 3.0.0-RC
+      wcs:
+        enabled: false
+      wps:
+        enabled: false
+      acl:
+        enabled: false
