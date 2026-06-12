@@ -3,7 +3,11 @@ kind: NetworkPolicy
 metadata:
   name: {{ include "platform-infra.fullname" . }}-allow-gscloud
 spec:
-  podSelector: {}
+  podSelector:
+    matchExpressions:
+      - key: app.kubernetes.io/component
+        operator: NotIn
+        values: ["pgadmin"]
   policyTypes: ["Ingress"]
   ingress:
     - from:
@@ -11,3 +15,25 @@ spec:
             matchLabels:
               airgap.geoserver/role: geoserver
         - podSelector: {}
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "platform-infra.fullname" . }}-allow-pgadmin-ingress
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: pgadmin
+  policyTypes: ["Ingress"]
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8080

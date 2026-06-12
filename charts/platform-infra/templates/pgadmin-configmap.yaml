@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "platform-infra.fullname" . }}-pgadmin
+  labels:
+    {{- include "platform-infra.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pgadmin
+data:
+  servers.json: |
+    {
+      "Servers": {
+        "1": {
+          "Name": "PostGIS POC",
+          "Group": "Servers",
+          "Host": {{ .Values.pgadmin.postgisHost | quote }},
+          "Port": {{ .Values.pgadmin.postgisPort }},
+          "MaintenanceDB": "postgres",
+          "Username": {{ .Values.secrets.postgresSuperUsername | quote }},
+          "SSLMode": "prefer",
+          "ConnectionParameters": {
+            "sslmode": "prefer",
+            "passfile": ".pgpass"
+          }
+        }
+      }
+    }

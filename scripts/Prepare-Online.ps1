@@ -52,6 +52,7 @@ $requiredImages = @(
     ('geoservercloud/geoserver-cloud-wfs:' + $script:Versions.GeoServerImage),
     ('geoservercloud/geoserver-cloud-gwc:' + $script:Versions.GeoServerImage),
     $script:Versions.PostgisImage,
+    $script:Versions.PgadminImage,
     $script:Versions.RabbitImage,
     $script:Versions.CurlImage,
     $script:Versions.K6Image,

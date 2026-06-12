@@ -14,7 +14,10 @@ do {
     $pending = New-Object System.Collections.Generic.List[string]
     $pods = (kubectl get pods --all-namespaces -o json | ConvertFrom-Json).items
     foreach ($pod in $pods) {
-        if ($pod.status.phase -eq 'Failed') { throw ('Failed pod: ' + $pod.metadata.namespace + '/' + $pod.metadata.name) }
+        if ($pod.status.phase -eq 'Failed') {
+            $pending.Add($pod.metadata.namespace + '/' + $pod.metadata.name + ' (Failed)')
+            continue
+        }
         if ($pod.status.phase -eq 'Succeeded') { continue }
         $statuses = @()
         if ($pod.status.PSObject.Properties.Name -contains 'containerStatuses') {
@@ -31,6 +34,7 @@ do {
 Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca ('https://' + $config.RANCHER_HOSTNAME + '/ping')
 Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca ('https://' + $config.MAPS_HOSTNAME + '/healthz')
 Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca --user ('kasm_user:' + $config.QGIS_PASSWORD) ('https://' + $config.QGIS_HOSTNAME + '/') --output (Join-Path $out 'qgis-desktop.html')
+Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca ('https://' + $config.PGADMIN_HOSTNAME + '/misc/ping')
 Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca ($base + '/wms?service=WMS&version=1.3.0&request=GetCapabilities') --output (Join-Path $out 'wms-capabilities.xml')
 Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca ($base + '/wms?service=WMS&version=1.3.0&request=GetMap&layers=demo:demo_places&styles=&crs=EPSG:4326&bbox=34,31,36,33&width=512&height=512&format=image/png') --output (Join-Path $out 'wms-map.png')
 Invoke-Native curl.exe --fail --silent --show-error --ssl-no-revoke --cacert $ca ($base + '/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=demo:demo_places&outputFormat=application%2Fjson') --output (Join-Path $out 'wfs-features.json')
@@ -45,6 +49,15 @@ if ((Get-Item -LiteralPath (Join-Path $out 'wmts-tile.png')).Length -lt 100) { t
 
 $postgisPod = kubectl -n $config.PLATFORM_NAMESPACE get pod -l app.kubernetes.io/component=postgis -o jsonpath='{.items[0].metadata.name}'
 Invoke-Native kubectl -n $config.PLATFORM_NAMESPACE exec $postgisPod '--' psql -U postgres -d gisdata -tAc 'SELECT count(*) FROM demo_places;'
+$pgadminPod = kubectl -n $config.PLATFORM_NAMESPACE get pod -l app.kubernetes.io/component=pgadmin -o jsonpath='{.items[0].metadata.name}'
+$pgadminStorageUser = $config.PGADMIN_DEFAULT_EMAIL.Replace('@', '_')
+$pgpassPath = '/var/lib/pgadmin/storage/' + $pgadminStorageUser + '/.pgpass'
+$pgadminServers = (kubectl -n $config.PLATFORM_NAMESPACE exec $pgadminPod '--' cat /pgadmin4/servers.json | Out-String) | ConvertFrom-Json
+$pgadminServer = $pgadminServers.Servers.'1'
+if ($pgadminServer.Name -ne 'PostGIS POC' -or $pgadminServer.Host -ne 'platform-platform-infra-postgis.platform-infra.svc.cluster.local' -or $pgadminServer.Username -ne $config.POSTGRES_SUPER_USERNAME) {
+    throw 'pgAdmin server definition does not target the internal PostGIS service as the generated superuser.'
+}
+Invoke-Native kubectl -n $config.PLATFORM_NAMESPACE exec $pgadminPod '--' sh -c ('test -s ' + $pgpassPath + ' && PGPASSFILE=' + $pgpassPath + ' /usr/local/pgsql-16/psql -h platform-platform-infra-postgis.platform-infra.svc.cluster.local -U ' + $config.POSTGRES_SUPER_USERNAME + ' -d gisdata -tAc "SELECT count(*) FROM demo_places WHERE PostGIS_Version() IS NOT NULL;" | grep -q 3')
 $qgisPod = kubectl -n $config.GEOSERVER_NAMESPACE get pod -l app.kubernetes.io/name=gscloud-qgis -o jsonpath='{.items[0].metadata.name}'
 Invoke-Native kubectl -n $config.GEOSERVER_NAMESPACE exec $qgisPod '--' qgis --version
 Invoke-Native kubectl -n $config.GEOSERVER_NAMESPACE exec $qgisPod '--' geoserver-rest GET about/version.json

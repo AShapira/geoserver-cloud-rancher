@@ -11,6 +11,7 @@ applications:
   geoserverCloudChart: 3.0.0-rc
   geoserverCloudImage: 3.0.0-RC
   postgis: postgis/postgis:16-3.4
+  pgadmin: dpage/pgadmin4:9.15@sha256:81ec1626582010444351d81b25413c362b3b15536d1f5f9414c5d9666e54badd
   rabbitmq: rabbitmq:3.13.7-management-alpine
   curl: curlimages/curl:8.12.1
   k6: grafana/k6:0.54.0
@@ -20,5 +21,5 @@ applications:
   viewerBuilder: node:22.14-alpine
   viewerRuntime: nginxinc/nginx-unprivileged:1.27-alpine
 charts:
-  platformInfra: 0.1.0
+  platformInfra: 0.2.0
   geoserverCloudSimulation: 0.2.0

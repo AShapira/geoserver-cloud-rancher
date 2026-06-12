@@ -17,6 +17,7 @@ flowchart LR
   Ingress --> Rancher
   Ingress --> Viewer["Offline OpenLayers viewer"]
   Ingress --> QGIS["QGIS Desktop via KasmVNC"]
+  Ingress --> PgAdmin["pgAdmin 4"]
   Ingress --> Gateway["GeoServer Cloud gateway"]
   Gateway --> WMS
   Gateway --> WFS
@@ -35,6 +36,7 @@ flowchart LR
   WebUI --> RMQ
   QGIS --> Gateway
   QGIS --> PG
+  PgAdmin --> PG
   QGIS --> Data["Shared /data PVC"]
   WMS --> Data
   WFS --> Data
@@ -49,8 +51,9 @@ Images are mirrored into `docker-local`. Docker Hub image paths retain their nor
 ## Persistence
 
 - JCR data is stored under `.state/jcr` on the host.
-- PostGIS, RabbitMQ, and GeoWebCache use K3s local-path PVCs.
+- PostGIS, RabbitMQ, GeoWebCache, and pgAdmin use K3s local-path PVCs.
 - The QGIS profile uses a dedicated PVC so projects and settings survive pod recreation.
+- pgAdmin uses a dedicated PVC for its user database, sessions, preferences, backup files, and restore files.
 - QGIS and the GeoServer Cloud services share a writable `/data` PVC for file-based geodata. Because this is a single-node simulation, `ReadWriteOnce` is sufficient; a multi-node deployment requires `ReadWriteMany` storage.
 - `Teardown.ps1` preserves state by default. `-PurgeData` removes generated state and persistent data.
 

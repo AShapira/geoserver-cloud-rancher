@@ -4,6 +4,7 @@ registry:
 images:
   busybox: jcr-proxy:8443/docker-local/rancher/mirrored-library-busybox:1.37.0
   postgis: jcr-proxy:8443/docker-local/postgis/postgis:16-3.4
+  pgadmin: jcr-proxy:8443/docker-local/dpage/pgadmin4:9.15
   rabbitmq: jcr-proxy:8443/docker-local/library/rabbitmq:3.13.7-management-alpine
 
 secrets:
@@ -14,6 +15,7 @@ secrets:
   rabbitmqUsername: geoserver
   rabbitmqPassword: change-me
   rabbitmqErlangCookie: change-me
+  pgadminPassword: change-me
 
 postgis:
   storage: 8Gi
@@ -24,6 +26,21 @@ postgis:
     limits:
       cpu: "2"
       memory: 1536Mi
+
+pgadmin:
+  host: pgadmin.localhost
+  tlsSecret: pgadmin-tls
+  email: admin@example.com
+  storage: 2Gi
+  postgisHost: platform-platform-infra-postgis.platform-infra.svc.cluster.local
+  postgisPort: 5432
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
 
 rabbitmq:
   storage: 2Gi

@@ -37,6 +37,16 @@ geoserver-rest GET workspaces/demo/datastores.json
 
 QGIS, KasmVNC, and the Kasm core-image source are open source. This deployment does not install the full Kasm Workspaces platform.
 
+## pgAdmin
+
+Open `https://pgadmin.localhost` and sign in with the `PGADMIN_DEFAULT_EMAIL` and `PGADMIN_PASSWORD` values from `.state/config.env`. The default email is `admin@example.com`.
+
+The `PostGIS POC` server is loaded declaratively and connects to the internal PostGIS service as the generated `postgres` superuser. Its password is copied from a Kubernetes Secret into pgAdmin's private `.pgpass` file; it is not stored in `servers.json`. The connection provides access to the `postgres`, `gscloud_config`, and `gisdata` databases.
+
+pgAdmin configuration and user files persist under `/var/lib/pgadmin`. Backup and restore files created in the UI are therefore retained on the 2 GiB pgAdmin PVC across pod and node restarts. Database data remains on the separate PostGIS PVC.
+
+pgAdmin is open source under the PostgreSQL Licence. Update checks, Gravatar requests, and Postfix are disabled for offline operation.
+
 ## Recovery order
 
 1. Start Docker Desktop.
@@ -48,4 +58,4 @@ QGIS, KasmVNC, and the Kasm core-image source are open source. This deployment d
 
 Update `versions.lock.yaml` and the corresponding constants in `scripts/Common.ps1`, run `Prepare-Online.ps1 -ForceMirror`, then repeat the isolation and validation tests. Runtime charts must never contain references outside `jcr-proxy:8443/docker-local`.
 
-Changing `QGIS_IMAGE_TAG` requires rebuilding with `Prepare-Online.ps1`. Existing installations can run `Initialize-State.ps1` to add missing QGIS configuration and regenerate the endpoint certificate with `qgis.localhost` while retaining the existing CA and passwords.
+Changing `QGIS_IMAGE_TAG` requires rebuilding with `Prepare-Online.ps1`. Existing installations can run `Initialize-State.ps1` to add missing QGIS and pgAdmin configuration and regenerate the endpoint certificate with `qgis.localhost` and `pgadmin.localhost` while retaining the existing CA and passwords.

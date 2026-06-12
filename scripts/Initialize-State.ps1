@@ -41,6 +41,10 @@ if (-not $config.ContainsKey('QGIS_PASSWORD') -or -not $config.QGIS_PASSWORD) {
     $config.QGIS_PASSWORD = New-RandomSecret -Bytes 18
     $changed = $true
 }
+if (-not $config.ContainsKey('PGADMIN_PASSWORD') -or -not $config.PGADMIN_PASSWORD) {
+    $config.PGADMIN_PASSWORD = New-RandomSecret -Bytes 18
+    $changed = $true
+}
 $config.STATE_DIR = Convert-ToForwardSlashPath (Get-StateDir)
 if ($changed) { Write-EnvFile -Values $config -Path $script:ConfigPath }
 
@@ -70,10 +74,11 @@ extendedKeyUsage = serverAuth
 DNS.1 = $($config.RANCHER_HOSTNAME)
 DNS.2 = $($config.MAPS_HOSTNAME)
 DNS.3 = $($config.QGIS_HOSTNAME)
-DNS.4 = jcr.localhost
-DNS.5 = jcr-proxy
-DNS.6 = host.k3d.internal
-DNS.7 = localhost
+DNS.4 = $($config.PGADMIN_HOSTNAME)
+DNS.5 = jcr.localhost
+DNS.6 = jcr-proxy
+DNS.7 = host.k3d.internal
+DNS.8 = localhost
 IP.1 = 127.0.0.1
 "@
 Set-FileUtf8NoBom -Path $opensslConfig -Content $configText
@@ -84,7 +89,7 @@ if ($newCa) {
 }
 
 $certificateNames = if (Test-Path -LiteralPath $serverCert) { (& $openssl x509 -in $serverCert -noout -ext subjectAltName 2>$null) -join "`n" } else { '' }
-$needsServerCertificate = $Force -or -not (Test-Path -LiteralPath $serverKey) -or -not (Test-Path -LiteralPath $serverCert) -or $certificateNames -notmatch [regex]::Escape($config.QGIS_HOSTNAME)
+$needsServerCertificate = $Force -or -not (Test-Path -LiteralPath $serverKey) -or -not (Test-Path -LiteralPath $serverCert) -or $certificateNames -notmatch [regex]::Escape($config.QGIS_HOSTNAME) -or $certificateNames -notmatch [regex]::Escape($config.PGADMIN_HOSTNAME)
 if ($needsServerCertificate) {
     Invoke-Native $openssl req -new -newkey rsa:2048 -nodes -keyout $serverKey -out $serverCsr -config $opensslConfig
     if (Test-Path -LiteralPath $serial) {
@@ -102,3 +107,4 @@ if ($newCa -and -not $SkipTrust) {
 Write-Host "Generated state: $script:ConfigPath"
 Write-Host "Development CA: $caCert"
 Write-Host ('QGIS browser password is stored in ' + $script:ConfigPath)
+Write-Host ('pgAdmin browser password is stored in ' + $script:ConfigPath)

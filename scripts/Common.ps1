@@ -18,11 +18,13 @@ $script:Versions = @{
     JcrProxyImage = 'nginxinc/nginx-unprivileged:1.27-alpine'
     JcrDatabaseImage = 'postgres:16-alpine'
     PostgisImage = 'postgis/postgis:16-3.4'
+    PgadminImage = 'dpage/pgadmin4:9.15@sha256:81ec1626582010444351d81b25413c362b3b15536d1f5f9414c5d9666e54badd'
     RabbitImage = 'rabbitmq:3.13.7-management-alpine'
     CurlImage = 'curlimages/curl:8.12.1'
     K6Image = 'grafana/k6:0.54.0'
     CanaryImage = 'busybox:1.37.0'
     QgisBaseImage = 'kasmweb/core-ubuntu-noble:1.17.0@sha256:eeaab79e401c3b70977afba2f7ec0d166e95547fdbca1d070905532a1af70f8c'
+    PlatformInfraChartVersion = '0.2.0'
     GeoServerChartVersion = '0.2.0'
 }
 
