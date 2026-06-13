@@ -36,6 +36,8 @@ if (-not $stateExists -or $Force) {
     $config.GEOSERVER_DB_PASSWORD = New-RandomSecret
     $config.GEOSERVER_ADMIN_USERNAME = 'admin'
     $config.GEOSERVER_ADMIN_PASSWORD = New-RandomSecret
+    $config.STAC_DB_USERNAME = 'stac'
+    $config.STAC_DB_PASSWORD = New-RandomSecret
 }
 if (-not $config.ContainsKey('QGIS_PASSWORD') -or -not $config.QGIS_PASSWORD) {
     $config.QGIS_PASSWORD = New-RandomSecret -Bytes 18
@@ -43,6 +45,14 @@ if (-not $config.ContainsKey('QGIS_PASSWORD') -or -not $config.QGIS_PASSWORD) {
 }
 if (-not $config.ContainsKey('PGADMIN_PASSWORD') -or -not $config.PGADMIN_PASSWORD) {
     $config.PGADMIN_PASSWORD = New-RandomSecret -Bytes 18
+    $changed = $true
+}
+if (-not $config.ContainsKey('STAC_DB_USERNAME') -or -not $config.STAC_DB_USERNAME) {
+    $config.STAC_DB_USERNAME = 'stac'
+    $changed = $true
+}
+if (-not $config.ContainsKey('STAC_DB_PASSWORD') -or -not $config.STAC_DB_PASSWORD) {
+    $config.STAC_DB_PASSWORD = New-RandomSecret
     $changed = $true
 }
 $config.STATE_DIR = Convert-ToForwardSlashPath (Get-StateDir)

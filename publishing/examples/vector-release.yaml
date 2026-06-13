@@ -1,0 +1,21 @@
+apiVersion: airgap.geoserver/v1
+kind: DatasetRelease
+spec:
+  collection:
+    id: municipal-boundaries
+    title: Municipal Boundaries
+    description: Versioned municipal boundary releases.
+    license: proprietary
+    keywords: [boundaries, municipalities, vector]
+    providers:
+      - name: GIS Department
+        roles: [producer]
+  release:
+    version: "2026.06"
+    datetime: "2026-06-13T00:00:00Z"
+  source:
+    type: vector
+    layer: municipalities
+  publication:
+    workspace: production
+    style: municipal-boundaries

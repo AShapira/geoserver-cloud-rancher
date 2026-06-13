@@ -13,6 +13,10 @@ foreach ($file in Get-ChildItem -Path (Join-Path (Get-RepoRoot) 'scripts') -Filt
 }
 if ($errors.Count) { throw ($errors -join "`n") }
 
+Invoke-Native python -m py_compile (Join-Path (Get-RepoRoot) 'publisher\publisher.py') (Join-Path (Get-RepoRoot) 'publisher\generate_demo.py')
+[void](Get-Content -Raw -LiteralPath (Join-Path (Get-RepoRoot) 'publishing\dataset-release.schema.json') | ConvertFrom-Json)
+if ((Get-Content -Raw -LiteralPath (Join-Path (Get-RepoRoot) 'stac-browser\basemaps.config.js')) -match 'https?://') { throw 'STAC Browser basemap configuration contains a remote URL.' }
+
 Push-Location (Join-Path (Get-RepoRoot) 'viewer')
 try {
     Invoke-Native npm.cmd ci --ignore-scripts

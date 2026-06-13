@@ -26,6 +26,7 @@ $infraArgs = @(
     'upgrade', '--install', 'platform', ('oci://' + (Get-JcrClientHost -Config $config) + '/' + $config.JCR_HELM_REPOSITORY + '/platform-infra'),
     '--version', $script:Versions.PlatformInfraChartVersion, '--namespace', $config.PLATFORM_NAMESPACE,
     '--set-string', ('images.pgadmin=' + (Get-JcrRuntimeImage -SourceImage $script:Versions.PgadminImage -Config $config)),
+    '--set-string', ('images.pgstac=' + (Get-JcrRuntimeImage -SourceImage $script:Versions.PgStacImage -Config $config)),
     '--set-string', ('secrets.postgresSuperUsername=' + $config.POSTGRES_SUPER_USERNAME),
     '--set-string', ('secrets.postgresSuperPassword=' + $config.POSTGRES_SUPER_PASSWORD),
     '--set-string', ('secrets.geoserverUsername=' + $config.GEOSERVER_DB_USERNAME),
@@ -34,6 +35,8 @@ $infraArgs = @(
     '--set-string', ('secrets.rabbitmqPassword=' + $config.RABBITMQ_PASSWORD),
     '--set-string', ('secrets.rabbitmqErlangCookie=' + $config.RABBITMQ_ERLANG_COOKIE),
     '--set-string', ('secrets.pgadminPassword=' + $config.PGADMIN_PASSWORD),
+    '--set-string', ('secrets.stacUsername=' + $config.STAC_DB_USERNAME),
+    '--set-string', ('secrets.stacPassword=' + $config.STAC_DB_PASSWORD),
     '--set-string', ('pgadmin.host=' + $config.PGADMIN_HOSTNAME),
     '--set-string', ('pgadmin.email=' + $config.PGADMIN_DEFAULT_EMAIL),
     '--wait', '--timeout', '10m'
@@ -50,8 +53,15 @@ $geoArgs = @(
     '--set-string', ('runtimeSecrets.geoserverAdminUsername=' + $config.GEOSERVER_ADMIN_USERNAME),
     '--set-string', ('runtimeSecrets.geoserverAdminPassword=' + $config.GEOSERVER_ADMIN_PASSWORD),
     '--set-string', ('runtimeSecrets.qgisPassword=' + $config.QGIS_PASSWORD),
+    '--set-string', ('runtimeSecrets.stacUsername=' + $config.STAC_DB_USERNAME),
+    '--set-string', ('runtimeSecrets.stacPassword=' + $config.STAC_DB_PASSWORD),
     '--set-string', ('qgis.host=' + $config.QGIS_HOSTNAME),
-    '--set-string', ('qgis.image=' + $config.JCR_INTERNAL_HOST + '/' + $config.JCR_DOCKER_REPOSITORY + '/' + $config.QGIS_IMAGE_NAME + ':' + $config.QGIS_IMAGE_TAG)
+    '--set-string', ('qgis.image=' + $config.JCR_INTERNAL_HOST + '/' + $config.JCR_DOCKER_REPOSITORY + '/' + $config.QGIS_IMAGE_NAME + ':' + $config.QGIS_IMAGE_TAG),
+    '--set-string', ('stac.host=' + $config.MAPS_HOSTNAME),
+    '--set-string', ('stac.apiImage=' + (Get-JcrRuntimeImage -SourceImage $script:Versions.StacApiImage -Config $config)),
+    '--set-string', ('stac.browserImage=' + $config.JCR_INTERNAL_HOST + '/' + $config.JCR_DOCKER_REPOSITORY + '/' + $config.STAC_BROWSER_IMAGE_NAME + ':' + $config.STAC_BROWSER_IMAGE_TAG),
+    '--set-string', ('publisher.image=' + $config.JCR_INTERNAL_HOST + '/' + $config.JCR_DOCKER_REPOSITORY + '/' + $config.PUBLISHER_IMAGE_NAME + ':' + $config.PUBLISHER_IMAGE_TAG),
+    '--set-string', ('publisher.publicBaseUrl=https://' + $config.MAPS_HOSTNAME)
 )
 if ($Tuned) { $geoArgs += @('--values', (Join-Path (Get-RepoRoot) 'charts\geoserver-cloud-sim\values-tuning.yaml')) }
 if ($EnableWmsHpa) { $geoArgs += @('--set', 'geoservercloud.geoserver.services.wms.hpa.enabled=true') }
@@ -60,5 +70,6 @@ Invoke-Native $helm @geoArgs
 
 & (Join-Path $PSScriptRoot 'Register-RancherCatalog.ps1')
 Write-Host ('Viewer: https://' + $config.MAPS_HOSTNAME)
+Write-Host ('STAC Browser: https://' + $config.MAPS_HOSTNAME + '/stac/')
 Write-Host ('QGIS: https://' + $config.QGIS_HOSTNAME + ' (user: kasm_user)')
 Write-Host ('pgAdmin: https://' + $config.PGADMIN_HOSTNAME + ' (user: ' + $config.PGADMIN_DEFAULT_EMAIL + ')')

@@ -1,0 +1,4 @@
+psycopg[binary]==3.3.4
+pystac[validation]==1.14.3
+PyYAML==6.0.3
+requests==2.34.2

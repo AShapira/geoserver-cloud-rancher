@@ -17,35 +17,72 @@ spec:
       restartPolicy: OnFailure
       imagePullSecrets:
         - name: {{ .Values.registry.pullSecret }}
+      securityContext:
+        fsGroup: 1000
       containers:
         - name: bootstrap
-          image: {{ .Values.bootstrap.image | quote }}
+          image: {{ .Values.publisher.image | quote }}
           command: ["sh", "/config/bootstrap.sh"]
           env:
-            - name: GS_ADMIN_USER
+            - name: GEOSERVER_URL
+              value: http://gscloud-gsc-gateway:8080/geoserver-cloud
+            - name: GEOSERVER_USER
               valueFrom:
                 secretKeyRef:
                   name: gscloud-runtime
                   key: geoserver-admin-username
-            - name: GS_ADMIN_PASSWORD
+            - name: GEOSERVER_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: gscloud-runtime
                   key: geoserver-admin-password
-            - name: DB_USER
+            - name: PUBLIC_BASE_URL
+              value: {{ .Values.publisher.publicBaseUrl | quote }}
+            - name: POSTGIS_HOST
+              value: {{ .Values.bootstrap.postgisHost | quote }}
+            - name: POSTGIS_PORT
+              value: "5432"
+            - name: POSTGIS_DATABASE
+              value: {{ .Values.bootstrap.postgisDatabase | quote }}
+            - name: POSTGIS_USER
               valueFrom:
                 secretKeyRef:
                   name: gscloud-runtime
                   key: pgconfig-username
-            - name: DB_PASSWORD
+            - name: POSTGIS_PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: gscloud-runtime
                   key: pgconfig-password
+            - name: PGSTAC_HOST
+              value: {{ .Values.stac.pgstacHost | quote }}
+            - name: PGSTAC_PORT
+              value: {{ .Values.stac.pgstacPort | quote }}
+            - name: PGSTAC_DATABASE
+              value: {{ .Values.stac.pgstacDatabase | quote }}
+            - name: PGSTAC_USER
+              valueFrom:
+                secretKeyRef:
+                  name: gscloud-runtime
+                  key: stac-username
+            - name: PGSTAC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gscloud-runtime
+                  key: stac-password
           volumeMounts:
             - name: config
               mountPath: /config
+            - name: geodata
+              mountPath: /data
+            - name: work
+              mountPath: /work
       volumes:
         - name: config
           configMap:
             name: gscloud-bootstrap
+        - name: geodata
+          persistentVolumeClaim:
+            claimName: gscloud-geodata
+        - name: work
+          emptyDir: {}

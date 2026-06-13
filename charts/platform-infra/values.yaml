@@ -6,6 +6,7 @@ images:
   postgis: jcr-proxy:8443/docker-local/postgis/postgis:16-3.4
   pgadmin: jcr-proxy:8443/docker-local/dpage/pgadmin4:9.15
   rabbitmq: jcr-proxy:8443/docker-local/library/rabbitmq:3.13.7-management-alpine
+  pgstac: jcr-proxy:8443/docker-local/ghcr.io/stac-utils/pgstac:v0.9.11
 
 secrets:
   postgresSuperUsername: postgres
@@ -16,6 +17,8 @@ secrets:
   rabbitmqPassword: change-me
   rabbitmqErlangCookie: change-me
   pgadminPassword: change-me
+  stacUsername: stac
+  stacPassword: change-me
 
 postgis:
   storage: 8Gi
@@ -51,3 +54,14 @@ rabbitmq:
     limits:
       cpu: "1"
       memory: 1Gi
+
+pgstac:
+  database: stac
+  storage: 8Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "2"
+      memory: 2Gi

@@ -16,6 +16,7 @@ flowchart LR
   Rancher["Rancher 2.14.2"] --> K8s["Single-node K3s 1.35.5"]
   Ingress --> Rancher
   Ingress --> Viewer["Offline OpenLayers viewer"]
+  Ingress --> StacGateway["STAC Browser, API, and assets"]
   Ingress --> QGIS["QGIS Desktop via KasmVNC"]
   Ingress --> PgAdmin["pgAdmin 4"]
   Ingress --> Gateway["GeoServer Cloud gateway"]
@@ -24,6 +25,9 @@ flowchart LR
   Gateway --> GWC
   Gateway --> REST
   Gateway --> WebUI
+  StacGateway --> StacApi["STAC FastAPI"]
+  StacGateway --> StacBrowser["Offline STAC Browser"]
+  StacApi --> PgSTAC["Dedicated PgSTAC"]
   WMS --> PG["PostGIS PGConfig"]
   WFS --> PG
   GWC --> PG
@@ -41,8 +45,14 @@ flowchart LR
   WMS --> Data
   WFS --> Data
   REST --> Data
+  Publisher["Publisher Job"] --> Data
+  Publisher --> PG
+  Publisher --> Gateway
+  Publisher --> PgSTAC
   K8s -->|pull only| JCR
 ```
+
+Publication is an internal control-plane workflow. A workstation script stages a source file and manifest to the shared geodata PVC, then launches a publisher Job. The Job loads vectors into PostGIS or normalizes rasters to COG, publishes version-specific GeoServer resources, and finally commits STAC metadata. Receipts and tombstones make the workflow idempotent and constrain full unpublish to resources created by that release.
 
 ## Artifact model
 
@@ -51,7 +61,7 @@ Images are mirrored into `docker-local`. Docker Hub image paths retain their nor
 ## Persistence
 
 - JCR data is stored under `.state/jcr` on the host.
-- PostGIS, RabbitMQ, GeoWebCache, and pgAdmin use K3s local-path PVCs.
+- PostGIS, PgSTAC, RabbitMQ, GeoWebCache, and pgAdmin use K3s local-path PVCs. PgSTAC has a dedicated database lifecycle and PVC.
 - The QGIS profile uses a dedicated PVC so projects and settings survive pod recreation.
 - pgAdmin uses a dedicated PVC for its user database, sessions, preferences, backup files, and restore files.
 - QGIS and the GeoServer Cloud services share a writable `/data` PVC for file-based geodata. Because this is a single-node simulation, `ReadWriteOnce` is sufficient; a multi-node deployment requires `ReadWriteMany` storage.

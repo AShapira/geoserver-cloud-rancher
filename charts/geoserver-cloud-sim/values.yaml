@@ -6,6 +6,8 @@ runtimeSecrets:
   geoserverAdminUsername: admin
   geoserverAdminPassword: change-me
   qgisPassword: change-me
+  stacUsername: stac
+  stacPassword: change-me
 
 registry:
   pullSecret: jcr-credentials
@@ -21,6 +23,27 @@ viewer:
     limits:
       cpu: 200m
       memory: 128Mi
+
+stac:
+  apiImage: jcr-proxy:8443/docker-local/ghcr.io/stac-utils/stac-fastapi-pgstac:6.2.1
+  browserImage: jcr-proxy:8443/docker-local/gscloud/stac-browser:0.1.0
+  gatewayImage: jcr-proxy:8443/docker-local/nginxinc/nginx-unprivileged:1.27-alpine
+  host: maps.localhost
+  tlsSecret: maps-tls
+  pgstacHost: platform-platform-infra-pgstac.platform-infra.svc.cluster.local
+  pgstacPort: "5432"
+  pgstacDatabase: stac
+  resources:
+    requests:
+      cpu: 50m
+      memory: 96Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+publisher:
+  image: jcr-proxy:8443/docker-local/gscloud/publisher:0.1.0
+  publicBaseUrl: https://maps.localhost
 
 qgis:
   image: jcr-proxy:8443/docker-local/gscloud/qgis:0.1.0
@@ -212,7 +235,16 @@ geoservercloud:
               repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-gwc
               tag: 3.0.0-RC
       wcs:
-        enabled: false
+        enabled: true
+        volumes: *sharedVolumes
+        containers:
+          spring:
+            volumeMounts: *sharedMounts
+            env: *commonEnv
+            resources: *commonResources
+            image:
+              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-wcs
+              tag: 3.0.0-RC
       wps:
         enabled: false
       acl:

@@ -51,6 +51,7 @@ $requiredImages = @(
     ('geoservercloud/geoserver-cloud-wms:' + $script:Versions.GeoServerImage),
     ('geoservercloud/geoserver-cloud-wfs:' + $script:Versions.GeoServerImage),
     ('geoservercloud/geoserver-cloud-gwc:' + $script:Versions.GeoServerImage),
+    ('geoservercloud/geoserver-cloud-wcs:' + $script:Versions.GeoServerImage),
     $script:Versions.PostgisImage,
     $script:Versions.PgadminImage,
     $script:Versions.RabbitImage,
@@ -59,6 +60,8 @@ $requiredImages = @(
     $script:Versions.CanaryImage,
     $script:Versions.JcrDatabaseImage,
     $script:Versions.JcrProxyImage,
+    $script:Versions.PgStacImage,
+    $script:Versions.StacApiImage,
     'node:22.14-alpine'
 )
 foreach ($image in $requiredImages) { $images.Add($image) }
@@ -126,6 +129,20 @@ Invoke-Native docker build --platform linux/amd64 --build-arg ('QGIS_BASE_IMAGE=
 Invoke-Native docker push $qgisPush
 $qgisDigest = (& docker image inspect $qgisPush --format '{{index .RepoDigests 0}}' 2>$null)
 $manifest.Add([pscustomobject]@{ source = 'local/qgis'; push = $qgisPush; runtime = $qgisRuntime; digest = $qgisDigest })
+
+$publisherPush = ('{0}/{1}/{2}:{3}' -f (Get-JcrClientHost -Config $config), $config.JCR_DOCKER_REPOSITORY, $config.PUBLISHER_IMAGE_NAME, $config.PUBLISHER_IMAGE_TAG)
+$publisherRuntime = ('{0}/{1}/{2}:{3}' -f $config.JCR_INTERNAL_HOST, $config.JCR_DOCKER_REPOSITORY, $config.PUBLISHER_IMAGE_NAME, $config.PUBLISHER_IMAGE_TAG)
+Invoke-Native docker build --platform linux/amd64 --build-arg ('GDAL_IMAGE=' + $script:Versions.GdalImage) --tag $publisherPush (Join-Path (Get-RepoRoot) 'publisher')
+Invoke-Native docker push $publisherPush
+$publisherDigest = (& docker image inspect $publisherPush --format '{{index .RepoDigests 0}}' 2>$null)
+$manifest.Add([pscustomobject]@{ source = 'local/publisher'; push = $publisherPush; runtime = $publisherRuntime; digest = $publisherDigest })
+
+$browserPush = ('{0}/{1}/{2}:{3}' -f (Get-JcrClientHost -Config $config), $config.JCR_DOCKER_REPOSITORY, $config.STAC_BROWSER_IMAGE_NAME, $config.STAC_BROWSER_IMAGE_TAG)
+$browserRuntime = ('{0}/{1}/{2}:{3}' -f $config.JCR_INTERNAL_HOST, $config.JCR_DOCKER_REPOSITORY, $config.STAC_BROWSER_IMAGE_NAME, $config.STAC_BROWSER_IMAGE_TAG)
+Invoke-Native docker build --platform linux/amd64 --build-arg ('STAC_BROWSER_VERSION=' + $script:Versions.StacBrowserVersion) --tag $browserPush (Join-Path (Get-RepoRoot) 'stac-browser')
+Invoke-Native docker push $browserPush
+$browserDigest = (& docker image inspect $browserPush --format '{{index .RepoDigests 0}}' 2>$null)
+$manifest.Add([pscustomobject]@{ source = 'local/stac-browser'; push = $browserPush; runtime = $browserRuntime; digest = $browserDigest })
 Set-FileUtf8NoBom -Path $existingManifestPath -Content ($manifest | ConvertTo-Json -Depth 5)
 
 $helmHome = Join-Path (Get-StateDir) 'helm'

@@ -32,17 +32,4 @@ data:
       --set=gs_user="$GEOSERVER_DB_USERNAME" <<'EOSQL'
     CREATE EXTENSION IF NOT EXISTS postgis;
     ALTER DATABASE gisdata OWNER TO :"gs_user";
-    SET ROLE :"gs_user";
-    CREATE TABLE IF NOT EXISTS public.demo_places (
-      id integer GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-      name varchar(100) NOT NULL,
-      category varchar(40) NOT NULL,
-      geom geometry(Point, 4326) NOT NULL
-    );
-    TRUNCATE public.demo_places RESTART IDENTITY;
-    INSERT INTO public.demo_places(name, category, geom) VALUES
-      ('Jerusalem', 'city', ST_SetSRID(ST_MakePoint(35.2137, 31.7683), 4326)),
-      ('Tel Aviv', 'city', ST_SetSRID(ST_MakePoint(34.7818, 32.0853), 4326)),
-      ('Haifa', 'city', ST_SetSRID(ST_MakePoint(34.9896, 32.7940), 4326));
-    CREATE INDEX IF NOT EXISTS demo_places_geom_gix ON public.demo_places USING gist (geom);
     EOSQL

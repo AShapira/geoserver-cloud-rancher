@@ -1,0 +1,19 @@
+apiVersion: airgap.geoserver/v1
+kind: DatasetRelease
+spec:
+  collection:
+    id: orthophoto
+    title: Orthophoto
+    description: Versioned orthophoto releases normalized to cloud-optimized GeoTIFF.
+    license: proprietary
+    keywords: [imagery, orthophoto, raster]
+    providers:
+      - name: GIS Department
+        roles: [producer]
+  release:
+    version: "2026.06"
+    datetime: "2026-06-13T00:00:00Z"
+  source:
+    type: raster
+  publication:
+    workspace: production

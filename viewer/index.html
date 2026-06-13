@@ -4,37 +4,57 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
-    <title>GeoServer Cloud Air-Gap Console</title>
+    <title>GeoServer Cloud STAC Console</title>
   </head>
   <body>
     <main class="shell">
       <header class="hero">
         <div>
           <p class="eyebrow">Rancher-managed offline GIS</p>
-          <h1>GeoServer Cloud 3.0</h1>
-          <p class="subtitle">Live protocol checks against the local WMS, WMTS, and WFS services.</p>
+          <h1>GeoServer Cloud STAC</h1>
+          <p class="subtitle">Search immutable dataset releases and render their GeoServer services.</p>
         </div>
-        <a class="admin-link" href="/geoserver-cloud/web/" target="_blank" rel="noreferrer">Open administration</a>
+        <nav class="header-links">
+          <a class="admin-link" href="/stac/">Open STAC Browser</a>
+          <a class="admin-link" href="/geoserver-cloud/web/" target="_blank" rel="noreferrer">Administration</a>
+        </nav>
       </header>
 
-      <section class="status-grid" aria-label="Protocol status">
-        <article class="status-card" data-protocol="wms"><span>WMS</span><strong id="wms-status">Checking</strong><small id="wms-detail">GetMap</small></article>
-        <article class="status-card" data-protocol="wmts"><span>WMTS</span><strong id="wmts-status">Checking</strong><small id="wmts-detail">GetTile</small></article>
-        <article class="status-card" data-protocol="wfs"><span>WFS</span><strong id="wfs-status">Checking</strong><small id="wfs-detail">GetFeature</small></article>
+      <section class="status-grid" aria-label="Service status">
+        <article class="status-card" data-protocol="stac"><span>STAC</span><strong id="stac-status">Checking</strong><small id="stac-detail">Collections and Item Search</small></article>
+        <article class="status-card" data-protocol="wms"><span>WMS</span><strong id="wms-status">Waiting</strong><small id="wms-detail">Select a release</small></article>
+        <article class="status-card" data-protocol="wmts"><span>WMTS</span><strong id="wmts-status">Waiting</strong><small id="wmts-detail">Select a release</small></article>
+        <article class="status-card" data-protocol="wfs"><span>WFS</span><strong id="wfs-status">Waiting</strong><small id="wfs-detail">Vector releases</small></article>
+        <article class="status-card" data-protocol="wcs"><span>WCS</span><strong id="wcs-status">Waiting</strong><small id="wcs-detail">Raster releases</small></article>
       </section>
 
       <section class="workspace">
         <aside class="controls">
-          <h2>Layers</h2>
-          <label><input id="wms-toggle" type="checkbox" checked /> WMS rendered points</label>
-          <label><input id="wmts-toggle" type="checkbox" /> WMTS cached tiles</label>
-          <label><input id="wfs-toggle" type="checkbox" checked /> WFS vector features</label>
-          <div class="metric"><span>WFS features</span><strong id="feature-count">0</strong></div>
+          <h2>Catalog Search</h2>
+          <label class="field">Collection<select id="collection"></select></label>
+          <label class="field">Keyword<input id="keyword" type="search" placeholder="title, description, keyword" /></label>
+          <div class="date-grid">
+            <label class="field">From<input id="datetime-start" type="date" /></label>
+            <label class="field">To<input id="datetime-end" type="date" /></label>
+          </div>
+          <label><input id="map-extent" type="checkbox" /> Limit to current map extent</label>
+          <button id="search" type="button">Search STAC</button>
+          <label class="field">Releases<select id="results" size="6"></select></label>
+          <button id="next" class="secondary" type="button" disabled>Next page</button>
+
+          <h2 class="section-title">Selected Release</h2>
+          <strong id="item-title">None</strong>
+          <div class="metric"><span>Type</span><strong id="item-type">-</strong></div>
+          <div class="metric"><span>Version</span><strong id="item-version">-</strong></div>
+          <div class="metric"><span>Page results</span><strong id="result-count">0</strong></div>
+          <label><input id="wms-toggle" type="checkbox" checked /> WMS rendered layer</label>
+          <label><input id="wmts-toggle" type="checkbox" /> WMTS cached layer</label>
+          <a id="asset-link" class="asset-link" href="#" hidden>Download data asset</a>
           <div class="metric"><span>Last refresh</span><strong id="last-refresh">Never</strong></div>
-          <button id="refresh" type="button">Refresh services</button>
+          <button id="refresh" class="secondary" type="button">Refresh selected</button>
           <p id="error" class="error" role="alert"></p>
         </aside>
-        <div id="map" class="map" aria-label="GeoServer protocol map"></div>
+        <div id="map" class="map" aria-label="STAC release map"></div>
       </section>
     </main>
     <script type="module" src="/src/main.js"></script>

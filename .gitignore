@@ -1,5 +1,6 @@
 .state/
 .tools/
+.docker-local/
 dist/
 reports/*.json
 reports/*.log
@@ -10,6 +11,7 @@ charts/*/charts/
 .env
 .env.*
 !.env.example
+/passwords.md
 
 # Editor and operating-system metadata
 .idea/

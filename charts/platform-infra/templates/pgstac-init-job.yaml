@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "platform-infra.fullname" . }}-pgstac-init
+  labels:
+    {{- include "platform-infra.labels" . | nindent 4 }}
+    app.kubernetes.io/component: pgstac-init
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "10"
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  backoffLimit: 10
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: pgstac-init
+    spec:
+      restartPolicy: OnFailure
+      imagePullSecrets:
+        - name: {{ .Values.registry.pullSecret }}
+      containers:
+        - name: init
+          image: {{ .Values.images.pgstac | quote }}
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -ec
+            - |
+              until pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE"; do
+                sleep 3
+              done
+              if ! psql -X -Atc "SELECT to_regprocedure('pgstac.upsert_collection(jsonb)')" 2>/dev/null | grep -q pgstac.upsert_collection; then
+                psql -X -v ON_ERROR_STOP=1 -f /docker-entrypoint-initdb.d/999_pgstac.sql
+              fi
+              psql -X -Atc "SELECT pgstac.get_version()"
+          env:
+            - name: PGHOST
+              value: {{ include "platform-infra.fullname" . }}-pgstac
+            - name: PGPORT
+              value: "5432"
+            - name: PGDATABASE
+              value: {{ .Values.pgstac.database | quote }}
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "platform-infra.fullname" . }}-secrets
+                  key: stac-username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "platform-infra.fullname" . }}-secrets
+                  key: stac-password

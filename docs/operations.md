@@ -15,6 +15,8 @@
 | Validate protocols and propagation | `.\scripts\Validate.ps1 -Deep` |
 | Exercise restarts and persistence | `.\scripts\Test-Restart.ps1` |
 | Run k6 profiles | `.\scripts\Run-LoadTests.ps1` |
+| Publish a dataset release | `.\scripts\Publish-Data.ps1 -Manifest <yaml> -Source <file>` |
+| Fully unpublish a release | `.\scripts\Unpublish-Data.ps1 -CollectionId <id> -Version <version>` |
 | Stop the environment | `.\scripts\Teardown.ps1` |
 | Destroy generated data | `.\scripts\Teardown.ps1 -PurgeData` |
 
@@ -46,6 +48,23 @@ The `PostGIS POC` server is loaded declaratively and connects to the internal Po
 pgAdmin configuration and user files persist under `/var/lib/pgadmin`. Backup and restore files created in the UI are therefore retained on the 2 GiB pgAdmin PVC across pod and node restarts. Database data remains on the separate PostGIS PVC.
 
 pgAdmin is open source under the PostgreSQL Licence. Update checks, Gravatar requests, and Postfix are disabled for offline operation.
+
+## STAC publishing
+
+`DatasetRelease` manifests use the schema in `publishing/dataset-release.schema.json`. Examples for vector and raster releases are under `publishing/examples`.
+
+Publication stages the local file on `gscloud-geodata`, then runs a Kubernetes Job that:
+
+1. Checks the collection/version tombstone and source checksum.
+2. Loads vectors into a version-specific PostGIS table or normalizes rasters to COG.
+3. Publishes the release through GeoServer WMS/WMTS plus WFS or WCS.
+4. Validates an optional existing style; style creation is intentionally out of scope.
+5. Upserts the STAC Collection and immutable Item only after GeoServer succeeds.
+6. Writes a private receipt used for idempotency, recovery, and unpublish.
+
+Reusing a version with changed content is rejected. Unpublish removes the STAC Item, GeoWebCache and GeoServer resources, database table or raster file, and public asset. The Collection is retained when empty unless `-RemoveCollection` is passed. A tombstone prevents accidental reuse of the removed version.
+
+The custom STAC Browser is built with `/stac/` as its path prefix and an empty basemap configuration. It has no public tile dependency. The STAC API is read-only at the gateway; only Item Search accepts POST.
 
 ## Recovery order
 

@@ -30,3 +30,18 @@ spec:
     - name: management
       port: 15672
       targetPort: management
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "platform-infra.fullname" . }}-pgstac
+  labels:
+    {{- include "platform-infra.labels" . | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: pgstac
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres

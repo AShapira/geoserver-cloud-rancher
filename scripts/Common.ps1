@@ -24,8 +24,12 @@ $script:Versions = @{
     K6Image = 'grafana/k6:0.54.0'
     CanaryImage = 'busybox:1.37.0'
     QgisBaseImage = 'kasmweb/core-ubuntu-noble:1.17.0@sha256:eeaab79e401c3b70977afba2f7ec0d166e95547fdbca1d070905532a1af70f8c'
-    PlatformInfraChartVersion = '0.2.0'
-    GeoServerChartVersion = '0.2.0'
+    PgStacImage = 'ghcr.io/stac-utils/pgstac:v0.9.11'
+    StacApiImage = 'ghcr.io/stac-utils/stac-fastapi-pgstac:6.2.1'
+    StacBrowserVersion = '4.0.1'
+    GdalImage = 'ghcr.io/osgeo/gdal:ubuntu-small-3.11.4'
+    PlatformInfraChartVersion = '0.3.0'
+    GeoServerChartVersion = '0.3.0'
 }
 
 function Get-RepoRoot { return $script:RepoRoot }
