@@ -1,6 +1,6 @@
 dependencies:
 - name: geoservercloud
   repository: https://camptocamp.github.io/helm-geoserver-cloud
-  version: 3.0.0-rc
-digest: sha256:83dd67fcefd3dc195d9aaeeefa0c48486ffb692963c12ac419580dcbc308d6a3
-generated: "2026-06-12T08:48:12.5573845+03:00"
+  version: 3.0.0
+digest: sha256:d1ee94cfc1f3e2a2b35ec2d26d986f1e71704a5663c801f1545bda40e2245db5
+generated: "2026-07-08T06:28:15.136182678+03:00"

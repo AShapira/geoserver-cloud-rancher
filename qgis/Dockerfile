@@ -1,4 +1,4 @@
-ARG QGIS_BASE_IMAGE=kasmweb/core-ubuntu-noble:1.17.0@sha256:eeaab79e401c3b70977afba2f7ec0d166e95547fdbca1d070905532a1af70f8c
+ARG QGIS_BASE_IMAGE=kasmweb/core-ubuntu-noble:1.19.0
 FROM ${QGIS_BASE_IMAGE}
 
 USER root

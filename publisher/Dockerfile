@@ -1,4 +1,4 @@
-ARG GDAL_IMAGE=ghcr.io/osgeo/gdal:ubuntu-small-3.11.4
+ARG GDAL_IMAGE=ghcr.io/osgeo/gdal:ubuntu-small-3.13.1
 FROM ${GDAL_IMAGE}
 
 ENV DEBIAN_FRONTEND=noninteractive \

@@ -32,8 +32,13 @@ spec:
             matchLabels:
               kubernetes.io/metadata.name: kube-system
           podSelector:
-            matchLabels:
-              app.kubernetes.io/name: traefik
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - rke2-traefik
+                  - rke2-ingress-nginx
+                  - ingress-nginx
       ports:
         - protocol: TCP
           port: 8080

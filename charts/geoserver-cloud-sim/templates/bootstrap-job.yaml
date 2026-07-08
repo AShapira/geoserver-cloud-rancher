@@ -22,6 +22,7 @@ spec:
       containers:
         - name: bootstrap
           image: {{ .Values.publisher.image | quote }}
+          imagePullPolicy: Always
           command: ["sh", "/config/bootstrap.sh"]
           env:
             - name: GEOSERVER_URL

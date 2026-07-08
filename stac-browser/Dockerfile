@@ -1,4 +1,4 @@
-FROM node:20-alpine AS build
+FROM node:25.9.0-alpine AS build
 ARG STAC_BROWSER_VERSION=4.0.1
 WORKDIR /src
 RUN wget -qO /tmp/stac-browser.tar.gz "https://github.com/radiantearth/stac-browser/archive/refs/tags/v${STAC_BROWSER_VERSION}.tar.gz" \
@@ -15,7 +15,7 @@ ENV SB_CONFIG=/src/deployment.config.js \
     SB_useTileLayerAsFallback=false
 RUN npm ci && npm run build
 
-FROM nginxinc/nginx-unprivileged:1.27-alpine
+FROM nginxinc/nginx-unprivileged:1.31.2-alpine
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /src/dist /usr/share/nginx/html
 USER root

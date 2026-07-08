@@ -3,8 +3,8 @@ name: geoserver-cloud-sim
 description: Air-gapped GeoServer Cloud 3.0 simulation with viewer and bootstrap data
 type: application
 version: 0.3.0
-appVersion: "3.0.0-RC"
+appVersion: "3.0.0"
 dependencies:
   - name: geoservercloud
-    version: 3.0.0-rc
+    version: 3.0.0
     repository: https://camptocamp.github.io/helm-geoserver-cloud

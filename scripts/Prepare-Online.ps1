@@ -36,7 +36,7 @@ $requiredImages = @(
     'rancher/mirrored-coredns-coredns:1.14.3',
     'rancher/mirrored-metrics-server:v0.8.1',
     'rancher/mirrored-library-traefik:3.6.13',
-    'rancher/mirrored-library-busybox:1.37.0',
+    $script:Versions.CanaryImage,
     'rancher/shell:v0.7.0',
     'rancher/fleet:v0.15.2',
     'rancher/fleet-agent:v0.15.2',
@@ -62,7 +62,8 @@ $requiredImages = @(
     $script:Versions.JcrProxyImage,
     $script:Versions.PgStacImage,
     $script:Versions.StacApiImage,
-    'node:22.14-alpine'
+    'node:26.4.0-alpine',
+    'node:25.9.0-alpine'
 )
 foreach ($image in $requiredImages) { $images.Add($image) }
 $images = @($images | Sort-Object -Unique)

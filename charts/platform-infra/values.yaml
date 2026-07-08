@@ -1,12 +1,12 @@
 registry:
-  pullSecret: jcr-credentials
+  pullSecret: harbor-credentials
 
 images:
-  busybox: jcr-proxy:8443/docker-local/rancher/mirrored-library-busybox:1.37.0
-  postgis: jcr-proxy:8443/docker-local/postgis/postgis:16-3.4
-  pgadmin: jcr-proxy:8443/docker-local/dpage/pgadmin4:9.15
-  rabbitmq: jcr-proxy:8443/docker-local/library/rabbitmq:3.13.7-management-alpine
-  pgstac: jcr-proxy:8443/docker-local/ghcr.io/stac-utils/pgstac:v0.9.11
+  busybox: harbor.airgap.local:5443/airgap/library/busybox:1.38.0
+  postgis: harbor.airgap.local:5443/airgap/postgis/postgis:18-3.6
+  pgadmin: harbor.airgap.local:5443/airgap/dpage/pgadmin4:9.16
+  rabbitmq: harbor.airgap.local:5443/airgap/library/rabbitmq:4.3.2-management-alpine
+  pgstac: harbor.airgap.local:5443/airgap/ghcr.io/stac-utils/pgstac:v0.9.11
 
 secrets:
   postgresSuperUsername: postgres

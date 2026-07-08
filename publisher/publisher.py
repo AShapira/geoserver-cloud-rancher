@@ -173,6 +173,12 @@ class Publisher:
         encoded = quote(workspace, safe="")
         if not self.exists(f"/rest/workspaces/{encoded}.json"):
             self.geoserver("POST", "/rest/workspaces", json={"workspace": {"name": workspace}})
+        if not self.exists(f"/rest/namespaces/{encoded}.json"):
+            self.geoserver(
+                "POST",
+                "/rest/namespaces",
+                json={"namespace": {"prefix": workspace, "uri": f"{self.public_base_url}/geoserver-cloud/{workspace}"}},
+            )
 
     def validate_style(self, workspace: str, style: str) -> None:
         if self.exists(f"/rest/workspaces/{quote(workspace, safe='')}/styles/{quote(style, safe='')}.json"):
@@ -216,6 +222,7 @@ class Publisher:
             self.geoserver("POST", store_path + "/featuretypes", json={"featureType": {
                 "name": names["layer"], "nativeName": names["table"],
                 "title": manifest["spec"]["collection"]["title"], "enabled": True,
+                "namespace": {"name": workspace},
             }})
 
     def publish_raster(self, source: Path, manifest: dict[str, Any], names: dict[str, str], asset_path: Path) -> None:

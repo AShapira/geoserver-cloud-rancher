@@ -10,10 +10,10 @@ runtimeSecrets:
   stacPassword: change-me
 
 registry:
-  pullSecret: jcr-credentials
+  pullSecret: harbor-credentials
 
 viewer:
-  image: jcr-proxy:8443/docker-local/gscloud/viewer:0.1.0
+  image: harbor.airgap.local:5443/airgap/gscloud/viewer:0.1.0
   host: maps.localhost
   tlsSecret: maps-tls
   resources:
@@ -25,9 +25,9 @@ viewer:
       memory: 128Mi
 
 stac:
-  apiImage: jcr-proxy:8443/docker-local/ghcr.io/stac-utils/stac-fastapi-pgstac:6.2.1
-  browserImage: jcr-proxy:8443/docker-local/gscloud/stac-browser:0.1.0
-  gatewayImage: jcr-proxy:8443/docker-local/nginxinc/nginx-unprivileged:1.27-alpine
+  apiImage: harbor.airgap.local:5443/airgap/ghcr.io/stac-utils/stac-fastapi-pgstac:6.3.1
+  browserImage: harbor.airgap.local:5443/airgap/gscloud/stac-browser:0.1.0
+  gatewayImage: harbor.airgap.local:5443/airgap/nginxinc/nginx-unprivileged:1.31.2-alpine
   host: maps.localhost
   tlsSecret: maps-tls
   pgstacHost: platform-platform-infra-pgstac.platform-infra.svc.cluster.local
@@ -42,11 +42,11 @@ stac:
       memory: 512Mi
 
 publisher:
-  image: jcr-proxy:8443/docker-local/gscloud/publisher:0.1.0
+  image: harbor.airgap.local:5443/airgap/gscloud/publisher:0.1.0
   publicBaseUrl: https://maps.localhost
 
 qgis:
-  image: jcr-proxy:8443/docker-local/gscloud/qgis:0.1.0
+  image: harbor.airgap.local:5443/airgap/gscloud/qgis:0.1.0
   host: qgis.localhost
   tlsSecret: qgis-tls
   profileStorage: 4Gi
@@ -66,7 +66,7 @@ geodata:
   storage: 8Gi
 
 bootstrap:
-  image: jcr-proxy:8443/docker-local/curlimages/curl:8.12.1
+  image: harbor.airgap.local:5443/airgap/curlimages/curl:8.21.0
   postgisHost: platform-platform-infra-postgis.platform-infra.svc.cluster.local
   postgisDatabase: gisdata
   postgisSchema: public
@@ -141,7 +141,7 @@ geoservercloud:
     image:
       pullPolicy: IfNotPresent
       pullSecrets:
-        - name: jcr-credentials
+        - name: harbor-credentials
   geoserver:
     dockerregistry:
       enabled: false
@@ -165,8 +165,8 @@ geoservercloud:
             env: *commonEnv
             resources: *commonResources
             image:
-              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-gateway
-              tag: 3.0.0-RC
+              repository: harbor.airgap.local:5443/airgap/geoservercloud/geoserver-cloud-gateway
+              tag: 3.0.0
         volumes: *sharedVolumes
       webui:
         volumes: *sharedVolumes
@@ -176,8 +176,8 @@ geoservercloud:
             env: *commonEnv
             resources: *commonResources
             image:
-              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-webui
-              tag: 3.0.0-RC
+              repository: harbor.airgap.local:5443/airgap/geoservercloud/geoserver-cloud-webui
+              tag: 3.0.0
       rest:
         volumes: *sharedVolumes
         containers:
@@ -186,9 +186,10 @@ geoservercloud:
             env: *commonEnv
             resources: *commonResources
             image:
-              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-rest
-              tag: 3.0.0-RC
+              repository: harbor.airgap.local:5443/airgap/geoservercloud/geoserver-cloud-rest
+              tag: 3.0.0
       wms:
+        replicaCount: 2
         volumes: *sharedVolumes
         containers:
           spring:
@@ -202,9 +203,10 @@ geoservercloud:
                 cpu: "2"
                 memory: 2Gi
             image:
-              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-wms
-              tag: 3.0.0-RC
+              repository: harbor.airgap.local:5443/airgap/geoservercloud/geoserver-cloud-wms
+              tag: 3.0.0
       wfs:
+        replicaCount: 2
         volumes: *sharedVolumes
         containers:
           spring:
@@ -212,8 +214,8 @@ geoservercloud:
             env: *commonEnv
             resources: *commonResources
             image:
-              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-wfs
-              tag: 3.0.0-RC
+              repository: harbor.airgap.local:5443/airgap/geoservercloud/geoserver-cloud-wfs
+              tag: 3.0.0
       gwc:
         volumes:
           <<: *sharedVolumes
@@ -232,8 +234,8 @@ geoservercloud:
                 name: cache
             resources: *commonResources
             image:
-              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-gwc
-              tag: 3.0.0-RC
+              repository: harbor.airgap.local:5443/airgap/geoservercloud/geoserver-cloud-gwc
+              tag: 3.0.0
       wcs:
         enabled: true
         volumes: *sharedVolumes
@@ -243,8 +245,8 @@ geoservercloud:
             env: *commonEnv
             resources: *commonResources
             image:
-              repository: jcr-proxy:8443/docker-local/geoservercloud/geoserver-cloud-wcs
-              tag: 3.0.0-RC
+              repository: harbor.airgap.local:5443/airgap/geoservercloud/geoserver-cloud-wcs
+              tag: 3.0.0
       wps:
         enabled: false
       acl:
