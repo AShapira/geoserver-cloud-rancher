@@ -25,13 +25,8 @@ if [[ ! -x "$TOOLS_DIR/kubectl" || "${1:-}" == "--force" ]]; then
   chmod 0755 "$TOOLS_DIR/kubectl"
 fi
 
-if [[ ! -x "$TOOLS_DIR/docker-compose" || "${1:-}" == "--force" ]]; then
-  curl -fsSL "https://github.com/docker/compose/releases/download/v2.32.4/docker-compose-linux-x86_64" -o "$TOOLS_DIR/docker-compose"
-  chmod 0755 "$TOOLS_DIR/docker-compose"
-fi
-
 run_sudo systemctl enable --now podman.socket
 podman --version
+"$(podman_compose_bin)" --version
 "$(helm_bin)" version --short
 "$(kubectl_bin)" version --client=true || true
-"$TOOLS_DIR/docker-compose" version

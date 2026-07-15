@@ -40,10 +40,6 @@ if [[ -n "$public_images" ]]; then
 fi
 
 if [[ -f "$STATE_DIR/harbor/installer/docker-compose.yml" ]]; then
-  if podman compose version >/dev/null 2>&1; then
-    podman compose -f "$STATE_DIR/harbor/installer/docker-compose.yml" config --quiet
-  elif command -v podman-compose >/dev/null 2>&1; then
-    podman-compose -f "$STATE_DIR/harbor/installer/docker-compose.yml" config --quiet
-  fi
+  "$(podman_compose_bin)" -f "$STATE_DIR/harbor/installer/docker-compose.yml" config --quiet
 fi
 echo "Static checks passed."

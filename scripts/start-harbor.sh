@@ -65,17 +65,9 @@ for service in compose.get("services", {}).values():
 with open("docker-compose.yml", "w", encoding="utf-8") as handle:
     yaml.safe_dump(compose, handle, sort_keys=False)
 PY
-if sudo_cmd test -x /usr/local/bin/podman-compose; then
-  compose=(/usr/local/bin/podman-compose -f docker-compose.yml)
-elif command -v podman-compose >/dev/null 2>&1; then
-  compose=("$(command -v podman-compose)" -f docker-compose.yml)
-elif [[ -x "$TOOLS_DIR/docker-compose" ]]; then
-  compose=(env DOCKER_HOST=unix:///run/podman/podman.sock "$TOOLS_DIR/docker-compose" -f docker-compose.yml)
-else
-  compose=(podman compose -f docker-compose.yml)
-fi
-run_sudo "${compose[@]}" down
-run_sudo "${compose[@]}" up -d
+podman_compose=("$(podman_compose_bin)" -f docker-compose.yml)
+run_sudo "${podman_compose[@]}" down
+run_sudo "${podman_compose[@]}" up -d
 popd >/dev/null
 
 wait_for_url "https://${HARBOR_EXTERNAL_HOST}/api/v2.0/ping" "$STATE_DIR/certs/ca.crt" 900

@@ -191,6 +191,16 @@ kubectl_bin() {
   if [[ -x "$TOOLS_DIR/kubectl" ]]; then printf '%s\n' "$TOOLS_DIR/kubectl"; else printf '%s\n' "kubectl"; fi
 }
 
+podman_compose_bin() {
+  if [[ -x /usr/local/bin/podman-compose ]]; then
+    printf '%s\n' /usr/local/bin/podman-compose
+  elif command -v podman-compose >/dev/null 2>&1; then
+    command -v podman-compose
+  else
+    die "Missing podman-compose. Run ./scripts/install-tools.sh first."
+  fi
+}
+
 kube_env() {
   export KUBECONFIG="${KUBECONFIG:-/etc/rancher/rke2/rke2.yaml}"
   export PATH="/var/lib/rancher/rke2/bin:$TOOLS_DIR:$PATH"

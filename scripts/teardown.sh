@@ -22,7 +22,7 @@ fi
 run_sudo systemctl stop rke2-server.service 2>/dev/null || true
 if [[ -f "$STATE_DIR/harbor/installer/docker-compose.yml" ]]; then
   pushd "$STATE_DIR/harbor/installer" >/dev/null
-  if podman compose version >/dev/null 2>&1; then run_sudo podman compose down; elif command -v podman-compose >/dev/null 2>&1; then run_sudo podman-compose down; fi
+  run_sudo "$(podman_compose_bin)" -f docker-compose.yml down
   popd >/dev/null
 fi
 if [[ "$purge" -eq 1 ]]; then
